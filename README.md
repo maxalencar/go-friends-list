@@ -21,7 +21,7 @@ You will need Go.
 
 ## Running the server
 
-    go run server/main.go
+    go run main.go
 
 
 Usage of server:
