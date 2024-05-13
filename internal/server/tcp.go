@@ -4,9 +4,10 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"go-friends-list/model"
 	"log"
 	"net"
+
+	"go-friends-list/pkg/model"
 )
 
 var (

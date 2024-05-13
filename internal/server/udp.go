@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"go-friends-list/model"
 	"log"
 	"net"
 	"time"
+
+	"go-friends-list/pkg/model"
 )
 
 var (

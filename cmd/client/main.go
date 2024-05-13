@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"go-friends-list/model"
 	"io"
 	"log"
 	"net"
 	"os"
 	"strings"
 	"time"
+
+	"go-friends-list/pkg/model"
 )
 
 func main() {

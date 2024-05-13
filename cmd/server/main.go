@@ -3,8 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	"go-friends-list/server"
 	"log"
+
+	"go-friends-list/internal/server"
 )
 
 func main() {

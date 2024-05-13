@@ -21,7 +21,7 @@ You will need Go.
 
 ## Running the server
 
-    go run main.go
+    go run cmd/server/main.go
 
 
 Usage of server:
@@ -36,7 +36,7 @@ Usage of server:
 
 We can run mulitple instances of the client and the flag -p must be provided to indicate the payload sent with the user identification and his friends list.
     
-    go run client/main.go -payload '{\"user_id\": 1, \"friends\": [2,3,4]}'
+    go run cmd/client/main.go -payload '{\"user_id\": 1, \"friends\": [2,3,4]}'
 
 Usage of client:
 
