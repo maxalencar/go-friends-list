@@ -1,11 +1,18 @@
 package server
 
+// importers: []
+// callers: []
+// affected_api: []
+// data_schemas: []
+// verbatim_instruction: Fix accept loop to stop logging on closed network connection and add strings import.
+
 import (
 	"bufio"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net"
+	"strings"
 
 	"go-friends-list/pkg/model"
 )
@@ -44,6 +51,9 @@ func (t *TCPServer) Run() (err error) {
 	for {
 		conn, err := t.server.Accept()
 		if err != nil {
+			if strings.Contains(err.Error(), "use of closed network connection") {
+				return nil
+			}
 			log.Printf("could not accept connection: %v", err)
 			continue
 		}
