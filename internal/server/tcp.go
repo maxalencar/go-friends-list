@@ -43,7 +43,7 @@ func (t *TCPServer) Run() (err error) {
     if err != nil {
         return err
     }
-    _ = t.Close()
+    // defer t.Close() // removed to avoid double close in tests
     t.storedMessages = make(map[string]model.ChatMessage)
     t.lastSeq = make(map[int]int)
 

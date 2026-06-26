@@ -73,9 +73,9 @@ func TestNotifyFriends(t *testing.T) {
 func TestMessageLifecycle(t *testing.T) {
     // Set up a pipe to simulate client/server connection.
     client, serverConn := net.Pipe()
-    _ = client.Close()
-    _ = serverConn.Close()
-
+    defer client.Close()
+    defer serverConn.Close()
+    
     // Prepare a payload to register the client (user 1, friend 2).
     payload := model.Payload{UserID: 1, Friends: []int{2}}
     // Encode payload to the connection (as the server expects).
@@ -84,14 +84,31 @@ func TestMessageLifecycle(t *testing.T) {
         t.Fatalf("failed to send initial payload: %v", err)
     }
 
-    // Create TCPServer with minimal maps.
+    // Create TCPServer with a dummy recipient connection to allow status updates.
+    dummyConn, dummyPeer := net.Pipe()
+    defer dummyConn.Close()
+    defer dummyPeer.Close()
+    // Consume any messages sent to the dummy peer to avoid blocking.
+    go func() {
+        r := bufio.NewReader(dummyPeer)
+        for {
+            _, err := r.ReadString('\n')
+            if err != nil {
+                return
+            }
+        }
+    }()
     srv := &TCPServer{
-        aConns:          map[net.Conn]model.Payload{client: payload},
-        iConns:          make(chan net.Conn, 1),
-        dConns:          make(chan net.Conn, 1),
+        aConns: map[net.Conn]model.Payload{
+            client: payload,
+            dummyConn: model.Payload{UserID: 2, Friends: []int{1}},
+        },
+        iConns: make(chan net.Conn, 1),
+        dConns: make(chan net.Conn, 1),
         storedMessages: make(map[string]model.ChatMessage),
-        lastSeq:         make(map[int]int),
+        lastSeq: make(map[int]int),
     }
+    // No need to mark dummy connection via iConns; isConnected checks aConns
 
     // Inject the connection into online map via iConns.
     srv.iConns <- client
@@ -107,10 +124,14 @@ func TestMessageLifecycle(t *testing.T) {
     go srv.handleConn(serverConn)
 
     // Read the ACK/status update back from the client side.
-    dec := json.NewDecoder(client)
+    r := bufio.NewReader(client)
+    line, err := r.ReadString('\n')
+    if err != nil {
+        t.Fatalf("failed to read status update: %v", err)
+    }
     var statusUpdate model.ChatMessage
-    if err := dec.Decode(&statusUpdate); err != nil {
-        t.Fatalf("failed to decode status update: %v", err)
+    if err := json.Unmarshal([]byte(line), &statusUpdate); err != nil {
+        t.Fatalf("failed to unmarshal status update: %v", err)
     }
     if statusUpdate.ID != chat.ID || statusUpdate.Status != model.Delivered {
         t.Fatalf("expected Delivered status for message %s, got %s", chat.ID, statusUpdate.Status)
