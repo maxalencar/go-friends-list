@@ -11,12 +11,12 @@ import (
     "testing"
     "time"
 
-    "go-friends-list/internal/server"
+    "go-friends-list/internal/server/protocol"
 )
 
 func TestGracefulShutdown(t *testing.T) {
     // Create a TCP server listening on a random port
-    srv, err := server.NewServer("tcp", "127.0.0.1:0")
+    srv, err := protocol.NewServer("tcp", "127.0.0.1:0")
     if err != nil {
         t.Fatalf("failed to create server: %v", err)
     }

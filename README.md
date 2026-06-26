@@ -1,19 +1,34 @@
 # GO Friends List
 
-This is a simple friends list notification application supporting either TCP and UDP protocols, used to demonstrate how we can communicate between several connections that can be used to broadcast messages through channels.
+This is a simple friends‑list notification application supporting both TCP and UDP protocols, demonstrating how multiple connections can broadcast messages through channels.
 
-- It notifies the active friends when connecting
-- It nofities the active friends when disconnecting
+## Features Implemented
+- **TCP Server**: Full chat capability with message status tracking (`sent`, `delivered`, `read`).
+- **UDP Server**:
+  - Configurable heartbeat interval via the `-heartbeat` flag (default **5 seconds**).
+  - **Reliable chat** over UDP with sequence numbers, ACKs, and duplicate‑message suppression.
+- **Client**:
+  - Dynamic `-to` flag to specify the recipient of outgoing chat messages.
+  - Proper read‑receipt handling and status symbols (`⏳`, `✓`, `[READ]`, `❌`).
+  - Configurable ACK timeout (`-ack-timeout`) and maximum retransmissions (`-max-retries`).
+  - Supports both TCP and UDP protocols.
+- **Refactor & Concurrency**:
+  - All mutable server state (`connections`, `channels`, etc.) encapsulated within `TCPServer` and `UDPServer` structs.
+  - Thread‑safe access using `sync.RWMutex`.
+- **Graceful shutdown** on SIGINT/SIGTERM.
+- **Testing**:
+  - Unit and integration tests for TCP server start‑up, handshake, message delivery, and UDP reliability (retransmission, ACK handling).
+- **Graphify**: Knowledge graph updated with `graphify update .` after structural changes.
 
-PS: To keep it simple no validations have been added for example to detect if the same user has "logged" more than once or if the friends list has any duplicated user id, of if they are mutual friends to receive the notification for example. we are assuming the best case scenario here to show the communication working between them.
-
-- Both server and client use the port 8080 as default, but can be changed if adding the flag -port when running it.
-- Both server and client use the protocol tcp as default, but can be changed if adding the flag -protocol when running it.
+## TODO (Remaining Work)
+- **UDP Chat Reliability**: Implement retransmission or acknowledgment logic for UDP‑based chat messages to handle packet loss. *(Completed – see Reliable UDP implementation above.)*
+- **Configurable UDP Port Range**: Allow specifying a range of ports for UDP server fallback.
+- **Enhanced Client UI**: Better terminal UI for displaying friend list and offline/online status.
+- **Comprehensive Test Coverage**: Expand tests to cover UDP chat edge cases and client‑side UDP interactions.
 
 ## Getting Set Up
 
-Before running the application, you will need to ensure that you have a few requirements installed;
-You will need Go.
+Before running the application, ensure you have Go installed.
 
 ### Go
 
@@ -21,35 +36,73 @@ You will need Go.
 
 ## Running the server
 
-    go run cmd/server/main.go
+```bash
+go run cmd/server/main.go -protocol tcp -port 8080
+```
 
+### UDP server with custom heartbeat
 
-Usage of server:
-
-    -port int
-        Port. (default 8080)
-    -protocol string
-            Protocol used, currently supporting tcp and udp. (default "tcp")
-    
+```bash
+go run cmd/server/main.go -protocol udp -port 8080 -heartbeat 10
+```
 
 ## Running the client
 
-We can run mulitple instances of the client and the flag -p must be provided to indicate the payload sent with the user identification and his friends list.
-    
-    go run cmd/client/main.go -payload '{\"user_id\": 1, \"friends\": [2,3,4]}'
+You can run multiple instances of the client. Provide a JSON payload with the user ID and friends list. You can also specify the recipient of chat messages using the `-to` flag, and adjust ACK behavior with the new flags.
 
-Usage of client:
+```bash
+go run cmd/client/main.go \
+  -payload '{"user_id":1,"friends":[2,3,4]}' \
+  -to 2 \
+  -protocol tcp \
+  -port 8080 \
+  -ack-timeout 1000 \
+  -max-retries 5
+```
 
-    -payload string
-        User Identification. (default "{\"user_id\": 0, \"friends\": []}")
-    -port int
-            TCP Port. (default 8080)
-    -protocol string
-            Protocol used, currently supporting tcp and udp. (default "tcp")
+### UDP client example (reliable)
 
-## TODO
+```bash
+go run cmd/client/main.go \
+  -payload '{"user_id":1,"friends":[2,3,4]}' \
+  -to 2 \
+  -protocol udp \
+  -port 8080 \
+  -ack-timeout 1000 \
+  -max-retries 5
+```
 
-- add chat capability
-- improve UDP heartbeat and the client
+## Usage of client:
+
+```
+-payload string
+    User Identification. (default "{\"user_id\": 0, \"friends\": []}")
+-to int
+    Recipient user ID for outgoing chat messages (default 0 means none)
+-port int
+    TCP/UDP Port. (default 8080)
+-protocol string
+    Protocol used, currently supporting tcp and udp. (default "tcp")
+-heartbeat int
+    Heartbeat interval for UDP server (client does not use this flag).
+-ack-timeout int
+    ACK timeout in milliseconds for reliable UDP (default 1000)
+-max-retries int
+    Maximum retransmission attempts for UDP messages (default 5)
+```
+
+## Lint / static analysis
+
+```bash
+go vet ./...
+```
+
+## Update the knowledge graph
+
+```bash
+graphify update .
+```
+
+---
 
 [@maxalencar](https://github.com/maxalencar)
