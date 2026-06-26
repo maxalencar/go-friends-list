@@ -52,17 +52,3 @@ func waitForAck(conn net.Conn, msgID string, timeout time.Duration) error {
 
 // processAck updates the stored message status based on an incoming AckMessage.
 // The caller is responsible for locating the appropriate server instance and its storedMessages map.
-func processAck(srv *TCPServer, ack AckMessage) {
-    srv.connMu.Lock()
-    defer srv.connMu.Unlock()
-    if msg, ok := srv.storedMessages[ack.ID]; ok {
-        // Update only if the ACK carries a later status.
-        if ack.Status != "" && ack.Status != msg.Status {
-            msg.Status = ack.Status
-            if ack.Status == model.Read {
-                msg.ReadAt = time.Now().Unix()
-            }
-            srv.storedMessages[ack.ID] = msg
-        }
-    }
-}

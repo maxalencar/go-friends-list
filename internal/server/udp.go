@@ -44,7 +44,7 @@ func (u *UDPServer) Run() (err error) {
 	if err != nil {
 		return errors.New("could not listen on UDP")
 	}
-	defer u.Close()
+	_ = u.Close()
 
 	go u.heartbeatCheck()
 	go u.broadcaster()

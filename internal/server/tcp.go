@@ -43,7 +43,7 @@ func (t *TCPServer) Run() (err error) {
     if err != nil {
         return err
     }
-    defer t.Close()
+    _ = t.Close()
     t.storedMessages = make(map[string]model.ChatMessage)
     t.lastSeq = make(map[int]int)
 
@@ -103,7 +103,7 @@ func (t *TCPServer) handleConn(conn net.Conn) {
     var pl model.Payload
     if err := d.Decode(&pl); err != nil {
         log.Printf("failed to decode initial payload: %v", err)
-        conn.Close()
+        _ = conn.Close()
         return
     }
     // Ensure storedMessages map is initialized.

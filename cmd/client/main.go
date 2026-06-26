@@ -18,8 +18,7 @@ import "sync"
 
 var (
     // Add message status tracking variables
-    lastMessageID string
-    messageStatuses = make(map[string]model.MessageStatus)
+        messageStatuses = make(map[string]model.MessageStatus)
     // Pending ACK tracking for reliable UDP
     pendingAcks   = make(map[string]chan struct{}) // map message ID to ack channel
     pendingMutex  sync.Mutex
@@ -44,7 +43,7 @@ func main() {
     if err != nil {
         log.Fatal(err)
     }
-    defer conn.Close()
+    _ = conn.Close()
 
         err = json.Unmarshal([]byte(payloadString), &payload)
     if err != nil {
@@ -60,12 +59,10 @@ func main() {
 
     // Start monitoring for read receipts
     go func() {
-        for {
-            select {
-            case <-time.After(5 * time.Second):
-                // Periodically check for read receipts
-                log.Println("Checking for read receipts...")
-            }
+        ticker := time.NewTicker(5 * time.Second)
+        defer ticker.Stop()
+        for range ticker.C {
+            log.Println("Checking for read receipts...")
         }
     }()
 
@@ -104,8 +101,7 @@ func sendChatMessage(conn net.Conn, text string) {
     msg := model.NewMessage(payload.UserID, toUser, text)
     msg.Seq = nextSeq
     nextSeq++
-    lastMessageID = msg.ID
-    messageStatuses[msg.ID] = model.Sent
+        messageStatuses[msg.ID] = model.Sent
 
     data, _ := json.Marshal(msg)
     // Send the message and start ACK handling
@@ -113,7 +109,9 @@ func sendChatMessage(conn net.Conn, text string) {
     pendingMutex.Lock()
     pendingAcks[msg.ID] = ackCh
     pendingMutex.Unlock()
-    conn.Write(append(data, '\n'))
+    if _, err := conn.Write(append(data, '\n')); err != nil {
+        log.Printf("error sending message %s: %v", msg.ID, err)
+    }
 
     go func(m model.ChatMessage, ch chan struct{}) {
         retries := 0
@@ -133,7 +131,9 @@ func sendChatMessage(conn net.Conn, text string) {
                 retries++
                 log.Printf("Retransmitting msg %s (attempt %d)", m.ID, retries)
                 data, _ := json.Marshal(m)
-                conn.Write(append(data, '\n'))
+                if _, err := conn.Write(append(data, '\n')); err != nil {
+                    log.Printf("error retransmitting message %s: %v", m.ID, err)
+                }
             }
         }
     }( *msg, ackCh)
@@ -218,8 +218,3 @@ func sendReadReceipt(msg model.ChatMessage) {
     writeMessage(conn, string(data))
 }
 
-func mustCopy(dst io.Writer, src io.Reader) {
-    if _, err := io.Copy(dst, src); err != nil {
-        log.Fatal(err)
-    }
-}

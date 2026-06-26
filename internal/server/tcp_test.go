@@ -16,10 +16,10 @@ func TestNotifyFriends(t *testing.T) {
     // Create two net.Pipe connections to act as two users.
     connA, peerA := net.Pipe()
     connB, peerB := net.Pipe()
-    defer connA.Close()
-    defer connB.Close()
-    defer peerA.Close()
-    defer peerB.Close()
+    _ = connA.Close()
+    _ = connB.Close()
+    _ = peerA.Close()
+    _ = peerB.Close()
 
     // User A has userID 1 and is friends with userID 2.
     payloadA := model.Payload{UserID: 1, Friends: []int{2}}
@@ -73,8 +73,8 @@ func TestNotifyFriends(t *testing.T) {
 func TestMessageLifecycle(t *testing.T) {
     // Set up a pipe to simulate client/server connection.
     client, serverConn := net.Pipe()
-    defer client.Close()
-    defer serverConn.Close()
+    _ = client.Close()
+    _ = serverConn.Close()
 
     // Prepare a payload to register the client (user 1, friend 2).
     payload := model.Payload{UserID: 1, Friends: []int{2}}

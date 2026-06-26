@@ -24,10 +24,10 @@ func TestChatMessageRouting(t *testing.T) {
     // Create pipe connections for two users.
     aConn, aPeer := net.Pipe()
     bConn, bPeer := net.Pipe()
-    defer aConn.Close()
-    defer bConn.Close()
-    defer aPeer.Close()
-    defer bPeer.Close()
+    _ = aConn.Close()
+    _ = bConn.Close()
+    _ = aPeer.Close()
+    _ = bPeer.Close()
 
     // Register connections in the server's map.
     srv.aConns[aConn] = model.Payload{UserID: 1, Friends: []int{2}}
@@ -81,6 +81,6 @@ func TestChatMessageRouting(t *testing.T) {
         t.Fatalf("chat message mismatch: got %+v want %+v", received, chat)
     }
     // Close peers to allow handleConn goroutines to exit.
-    aPeer.Close()
-    bPeer.Close()
+    _ = aPeer.Close()
+    _ = bPeer.Close()
 }

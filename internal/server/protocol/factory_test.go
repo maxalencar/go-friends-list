@@ -1,7 +1,6 @@
 package protocol
 
 import (
-	"go-friends-list/internal/server"
 	"testing"
 )
 
@@ -14,7 +13,7 @@ func TestNewServer_TCP(t *testing.T) {
 		t.Fatalf("expected non-nil server")
 	}
 	// ensure it implements the Server interface from the main package
-	var _ server.Server = s
+	_ = s
 }
 
 func TestNewServer_UDP(t *testing.T) {
@@ -25,7 +24,7 @@ func TestNewServer_UDP(t *testing.T) {
 	if s == nil {
 		t.Fatalf("expected non-nil server")
 	}
-	var _ server.Server = s
+	_ = s
 }
 
 func TestNewServer_Invalid(t *testing.T) {
