@@ -178,6 +178,10 @@ default:
     default:
         log.Printf("dConns channel full; dropping disconnect notification")
     }
+    // Ensure the connection is removed from the active connections map even if the channel was full
+    t.connMu.Lock()
+    delete(t.aConns, conn)
+    t.connMu.Unlock()
 }
 }
 
