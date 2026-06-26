@@ -161,7 +161,7 @@ func (t *TCPServer) handleConn(conn net.Conn) {
         }
     }
     // Connection closed: notify offline and clean up
-    t.dConns <- conn
+    select { case t.dConns <- conn: default: }
 }
 
 // notifyFriends - it notifies the user friends his status
