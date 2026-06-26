@@ -30,7 +30,7 @@ func NewTCPServer(addr string) (Server, error) {
         addr:    addr,
         aConns:  make(map[net.Conn]model.Payload),
         iConns:  make(chan net.Conn, 10),
-        dConns:  make(chan net.Conn, 1),
+        dConns:  make(chan net.Conn, 10),
         // initialise storedMessages and lastSeq maps
         storedMessages: make(map[string]model.ChatMessage),
         lastSeq:        make(map[int]int),
@@ -161,7 +161,24 @@ func (t *TCPServer) handleConn(conn net.Conn) {
         }
     }
     // Connection closed: notify offline and clean up
-    t.dConns <- conn
+    select {
+case t.dConns <- conn:
+    // sent successfully
+default:
+    // channel full; log and drop oldest if possible
+    select {
+    case <-t.dConns:
+        // dropped oldest
+    default:
+    }
+    // try again non‑blocking
+    select {
+    case t.dConns <- conn:
+        // sent after making space
+    default:
+        log.Printf("dConns channel full; dropping disconnect notification")
+    }
+}
 }
 
 // notifyFriends - it notifies the user friends his status
