@@ -23,6 +23,7 @@ type TCPServer struct {
     iConns         chan net.Conn
     dConns         chan net.Conn
     connMu         sync.RWMutex
+    serverMu       sync.Mutex
     // lastSeq tracks the highest sequence number seen per user ID to suppress duplicates.
     lastSeq        map[int]int
 }
@@ -42,7 +43,9 @@ func NewTCPServer(addr string) (Server, error) {
 
 // Run starts the TCP Server
 func (t *TCPServer) Run() (err error) {
+    t.serverMu.Lock()
     t.server, err = net.Listen("tcp", t.addr)
+    t.serverMu.Unlock()
     if err != nil {
         return err
     }
@@ -72,7 +75,10 @@ func (t *TCPServer) Run() (err error) {
 
 // Close shuts down the TCP Server
 func (t *TCPServer) Close() (err error) {
-    return t.server.Close()
+    t.serverMu.Lock()
+    srv := t.server
+    t.serverMu.Unlock()
+    return srv.Close()
 }
 
 // broadcaster - it broadcasts messages based on the selected channel
@@ -310,6 +316,10 @@ func (t *TCPServer) messageStatusMonitor() {
         <-ticker.C
         // Implement logic to check for status updates from clients
         // For now, just log the stored messages
-        log.Printf("Stored messages: %v", t.storedMessages)
+        // ponytail: RLock for storedMessages read in monitor goroutine
+        t.connMu.RLock()
+        msgs := t.storedMessages
+        t.connMu.RUnlock()
+        log.Printf("Stored messages: %v", msgs)
     }
 }
