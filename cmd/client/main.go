@@ -1,6 +1,7 @@
 package main
 
 import (
+    "context"
     "encoding/json"
     "flag"
     "fmt"
@@ -8,7 +9,9 @@ import (
     "log"
     "net"
     "os"
+    "os/signal"
     "bufio"
+    "syscall"
     "time"
 
     "go-friends-list/pkg/model"
@@ -31,6 +34,9 @@ var (
 )
 
 func main() {
+    ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+    defer stop()
+
     var port int
     var payloadString, protocol string
     flag.IntVar(&port, "port", 8080, "TCP Port.")
@@ -88,6 +94,9 @@ func main() {
             sendChatMessage(conn, text)
         }
     }()
+
+    <-ctx.Done()
+    log.Println("shutdown signal received, closing client...")
 }
 
 func writeMessage(conn net.Conn, msg string) {

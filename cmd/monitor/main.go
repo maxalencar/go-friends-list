@@ -1,10 +1,13 @@
 package main
 
 import (
+    "context"
     "flag"
     "log"
     "net/http"
+    "os/signal"
     "strconv"
+    "syscall"
 )
 
 func main() {
@@ -19,7 +22,20 @@ func main() {
 
     addr := ":" + strconv.Itoa(port)
     log.Printf("starting health check server on %s", addr)
-    if err := http.ListenAndServe(addr, nil); err != nil {
-        log.Fatalf("health check server failed: %v", err)
+    server := &http.Server{Addr: addr}
+
+    ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+    defer stop()
+
+    go func() {
+        if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+            log.Printf("health check server error: %v", err)
+        }
+    }()
+
+    <-ctx.Done()
+    log.Println("shutdown signal received, closing monitor...")
+    if err := server.Shutdown(context.Background()); err != nil {
+        log.Printf("monitor shutdown error: %v", err)
     }
 }
