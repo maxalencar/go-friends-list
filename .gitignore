@@ -1,5 +1,6 @@
 docs
 .claude
 **CLAUDE**
-**cover**
 **graphify**
+cover.out
+coverage.out
