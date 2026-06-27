@@ -97,12 +97,6 @@ go run cmd/client/main.go \
 go vet ./...
 ```
 
-## Update the knowledge graph
-
-```bash
-graphify update .
-```
-
 ---
 
 [@maxalencar](https://github.com/maxalencar)
