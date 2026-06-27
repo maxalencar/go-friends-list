@@ -4,27 +4,20 @@ This is a simple friends‑list notification application supporting the TCP prot
 
 ## Features Implemented
 - **TCP Server**: Full chat capability with message status tracking (`sent`, `delivered`, `read`).
-- **UDP Server**:
-  - Configurable heartbeat interval via the `-heartbeat` flag (default **5 seconds**).
-  - **Reliable chat** over UDP with sequence numbers, ACKs, and duplicate‑message suppression.
 - **Client**:
   - Dynamic `-to` flag to specify the recipient of outgoing chat messages.
   - Proper read‑receipt handling and status symbols (`⏳`, `✓`, `[READ]`, `❌`).
   - Configurable ACK timeout (`-ack-timeout`) and maximum retransmissions (`-max-retries`).
-  - Supports both TCP and UDP protocols.
+  - Supports TCP protocol.
 - **Refactor & Concurrency**:
   - All mutable server state (`connections`, `channels`, etc.) encapsulated within `TCPServer` and `UDPServer` structs.
   - Thread‑safe access using `sync.RWMutex`.
 - **Graceful shutdown** on SIGINT/SIGTERM.
 - **Testing**:
-  - Unit and integration tests for TCP server start‑up, handshake, message delivery, and UDP reliability (retransmission, ACK handling).
-- **Graphify**: Knowledge graph updated with `graphify update .` after structural changes.
+  - Unit and integration tests for TCP server start‑up, handshake and message delivery.
 
 ## TODO (Remaining Work)
-- **UDP Chat Reliability**: Implement retransmission or acknowledgment logic for UDP‑based chat messages to handle packet loss. *(Completed – see Reliable UDP implementation above.)*
-- **Configurable UDP Port Range**: Allow specifying a range of ports for UDP server fallback.
 - **Enhanced Client UI**: Better terminal UI for displaying friend list and offline/online status.
-- **Comprehensive Test Coverage**: Expand tests to cover UDP chat edge cases and client‑side UDP interactions.
 
 ## Getting Set Up
 
@@ -38,12 +31,6 @@ Before running the application, ensure you have Go installed.
 
 ```bash
 go run cmd/server/main.go -protocol tcp -port 8080
-```
-
-### UDP server with custom heartbeat
-
-```bash
-go run cmd/server/main.go -protocol udp -port 8080 -heartbeat 10
 ```
 
 ## Running the client
