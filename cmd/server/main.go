@@ -15,7 +15,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	srvproto "go-friends-list/internal/server/protocol"
 	srv "go-friends-list/internal/server"
 )
 
@@ -25,52 +24,52 @@ func main() {
 	defer stop()
 
 	var port int
-    var protocol string
-    var portRange string
+	var protocol string
+	var portRange string
 
-    flag.IntVar(&port, "port", 8080, "Port.")
-    flag.StringVar(&protocol, "protocol", "tcp", "Protocol used, currently supporting tcp and udp.")
-    flag.StringVar(&portRange, "port-range", "", "Optional port range in the form start-end for fallback if default port is unavailable.")
-    flag.Parse()
+	flag.IntVar(&port, "port", 8080, "Port.")
+	flag.StringVar(&protocol, "protocol", "tcp", "Protocol used, currently supporting tcp and udp.")
+	flag.StringVar(&portRange, "port-range", "", "Optional port range in the form start-end for fallback if default port is unavailable.")
+	flag.Parse()
 
-    // If a port range is provided, attempt to bind to the first available port within the range.
-    var srv srv.Server
-    var err error
-    if portRange != "" {
-        var start, end int
-        if n, err := fmt.Sscanf(portRange, "%d-%d", &start, &end); n != 2 || err != nil {
-            log.Fatalf("invalid port-range format: %s (expected start-end)", portRange)
-        }
-        bound := false
-        for p := start; p <= end; p++ {
-            srv, err = srvproto.NewServer(protocol, fmt.Sprintf(":%d", p))
-            if err == nil {
-                port = p
-                bound = true
-                break
-            }
-        }
-        if !bound {
-            log.Fatalf("could not bind to any port in range %s", portRange)
-        }
-    } else {
-        srv, err = srvproto.NewServer(protocol, fmt.Sprintf(":%d", port))
-    }
+	// If a port range is provided, attempt to bind to the first available port within the range.
+	var svr srv.Server
+	var err error
+	if portRange != "" {
+		var start, end int
+		if n, err := fmt.Sscanf(portRange, "%d-%d", &start, &end); n != 2 || err != nil {
+			log.Fatalf("invalid port-range format: %s (expected start-end)", portRange)
+		}
+		bound := false
+		for p := start; p <= end; p++ {
+			svr, err = srv.NewTCPServer(fmt.Sprintf(":%d", p))
+			if err == nil {
+				port = p
+				bound = true
+				break
+			}
+		}
+		if !bound {
+			log.Fatalf("could not bind to any port in range %s", portRange)
+		}
+	} else {
+		svr, err = srv.NewTCPServer(fmt.Sprintf(":%d", port))
+	}
 
 	if err != nil {
-        log.Fatalln(err)
-    }
+		log.Fatalln(err)
+	}
 
 	// Run server in a separate goroutine
 	runErrCh := make(chan error, 1)
 	go func() {
-		runErrCh <- srv.Run()
+		runErrCh <- svr.Run()
 	}()
 
 	// Wait for shutdown signal
 	<-ctx.Done()
 	log.Println("Shutdown signal received, closing server...")
-	if err := srv.Close(); err != nil {
+	if err := svr.Close(); err != nil {
 		log.Printf("Error closing server: %v", err)
 	}
 

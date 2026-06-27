@@ -1,6 +1,6 @@
 # GO Friends List
 
-This is a simple friends‑list notification application supporting both TCP and UDP protocols, demonstrating how multiple connections can broadcast messages through channels.
+This is a simple friends‑list notification application supporting the TCP protocol, demonstrating how multiple connections can broadcast messages through channels.
 
 ## Features Implemented
 - **TCP Server**: Full chat capability with message status tracking (`sent`, `delivered`, `read`).

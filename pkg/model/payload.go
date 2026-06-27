@@ -35,8 +35,8 @@ type ChatMessage struct {
 // Payload represents the data sent from client to server to identify the user and friends.
 // It matches the JSON payload used by the client flag "payload".
 type Payload struct {
-	UserID  int   `json:"user_id"`
-	Friends []int `json:"friends"`
+	UserID  int   `json:"user_id" validate:"required"`
+	Friends []int `json:"friends" validate:"required,dive,gt=0"`
 }
 
 // Helper functions

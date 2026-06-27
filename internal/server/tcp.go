@@ -11,9 +11,11 @@ import (
     "github.com/google/uuid"
 
     "go-friends-list/pkg/model"
+	"github.com/go-playground/validator/v10"
 )
 
 type TCPServer struct {
+    rateLimit map[string]time.Time // simple per‑IP rate limiter
     addr           string
     server         net.Listener
     storedMessages map[string]model.ChatMessage
@@ -28,6 +30,7 @@ type TCPServer struct {
 func NewTCPServer(addr string) (Server, error) {
     return &TCPServer{
         addr:    addr,
+        rateLimit: make(map[string]time.Time),
         aConns:  make(map[net.Conn]model.Payload),
         iConns:  make(chan net.Conn, 10),
         dConns:  make(chan net.Conn, 10),
@@ -96,6 +99,8 @@ func (t *TCPServer) broadcaster() {
 }
 
 // handleConn - it decodes the payload and add the incoming connection into the active connections map
+var validate = validator.New()
+
 func (t *TCPServer) handleConn(conn net.Conn) {
     // First, read the initial payload from the client to register the user.
     // The client sends a JSON payload string, not a ChatMessage.
@@ -103,6 +108,12 @@ func (t *TCPServer) handleConn(conn net.Conn) {
     var pl model.Payload
     if err := d.Decode(&pl); err != nil {
         log.Printf("failed to decode initial payload: %v", err)
+        _ = conn.Close()
+        return
+    }
+    // Validate payload fields
+    if err := validate.Struct(pl); err != nil {
+        log.Printf("payload validation failed: %v", err)
         _ = conn.Close()
         return
     }
