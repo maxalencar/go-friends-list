@@ -13,7 +13,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 	"syscall"
 	"testing"
 	"time"
@@ -262,10 +261,7 @@ func TestClientMain(t *testing.T) {
 	port := listener.Addr().(*net.TCPAddr).Port
 
 	accepted := make(chan struct{}, 1)
-	var (
-		readOnce sync.Once
-		readBuf  bytes.Buffer
-	)
+	var readBuf bytes.Buffer
 	go func() {
 		conn, err := listener.Accept()
 		if err != nil {
@@ -273,7 +269,6 @@ func TestClientMain(t *testing.T) {
 		}
 		defer conn.Close()
 		accepted <- struct{}{}
-		_ = readOnce
 		_, _ = io.Copy(&readBuf, bufio.NewReader(conn))
 	}()
 
